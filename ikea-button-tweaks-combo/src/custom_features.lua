@@ -187,6 +187,7 @@ function custom_features.autofire_enabled(device, button_name)
   
   if model == STYRBAR then
     return button_name == "Top" and device.preferences.autofireEnabledOn or button_name == "Bottom" and device.preferences.autofireEnabledOff
+      or button_name == "Left" and device.preferences.autofireEnabledPrev or button_name == "Right" and device.preferences.autofireEnabledNext
   end
 
   if model == TRADFRI_REMOTE then

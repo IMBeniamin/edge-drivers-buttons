@@ -137,6 +137,19 @@ preferences:
     preferenceType: boolean
     definition:
       default: false      
+  - title: "Auto-repeat Held Left [ < ]"
+    name: autofireEnabledPrev
+    description: "Repeats until the arrow is released. The first Held still arrives ~2 s into the press, when the remote reports which arrow it is."
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  - title: "Auto-repeat Held Right [ > ]"
+    name: autofireEnabledNext
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
   - title: "Max repetitions (def: 10)"
     name: autofireMaxLoops
     required: true

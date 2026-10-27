@@ -78,8 +78,12 @@ local function styrbar_begin_held_handler(pressed_type)
     local payload = zb_rx.body.zcl_body.body_bytes
     for i = 1, #payload do
       if payload:byte(i) ~= 0 then
-        --log.debug("Ignoring not zeros")
-        return -- ignore, not all zeros
+        -- Not all zeros: the arrow long press ended (Zigbee2MQTT exposes it as
+        -- arrow release with a duration). Stop any arrow auto-repeat.
+        custom_button_utils.autofire_stop(device)
+        -- Zigbee2MQTT times the ghost ON from the release; suppress it from here too
+        device:set_field(PRE_GHOST_EVENT_TIME, lua_socket.gettime())
+        return
       end
     end
         
@@ -143,6 +147,10 @@ local function styrbar_scenes_button_handler(pressed_type)
 
     if pressed_type == capabilities.button.button.held then
       custom_button_utils.emit_button_event(device, button_name, pressed_type, true)
+      -- Arrow auto-repeat runs until the release (0x09 with non-zero payload)
+      if custom_features.autofire_enabled(device, button_name) then
+        custom_button_utils.autofire_start(device, button_name, pressed_type, device.preferences.autofireDelay, device.preferences.autofireMaxLoops)
+      end
     elseif pressed_type == capabilities.button.button.pushed then
       custom_button_utils.emit_button_event(device, button_name, pressed_type)
     end
