@@ -139,7 +139,7 @@ preferences:
       default: false      
   - title: "Auto-repeat Held Left [ < ]"
     name: autofireEnabledPrev
-    description: "Repeats until the arrow is released. The first Held still arrives ~2 s into the press, when the remote reports which arrow it is."
+    description: "Repeats until the arrow is released, then sends Toggled up. The first Held still arrives ~2 s into the press, when the remote reports which arrow it is."
     required: true
     preferenceType: boolean
     definition:
@@ -160,6 +160,22 @@ preferences:
       maximum: 100
   - title: "Repetition delay (def: 1000 ms)"
     name: autofireDelay
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 300
+      default: 1000
+      maximum: 5000
+  - title: "Arrow max repeats (def: 12)"
+    name: arrowAutofireMaxLoops
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 1
+      default: 12
+      maximum: 100
+  - title: "Arrow repeat delay (def: 1000 ms)"
+    name: arrowAutofireDelay
     required: true
     preferenceType: number
     definition:

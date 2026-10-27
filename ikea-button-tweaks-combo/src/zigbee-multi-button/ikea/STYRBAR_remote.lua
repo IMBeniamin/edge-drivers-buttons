@@ -44,6 +44,7 @@ local PowerConfiguration = clusters.PowerConfiguration
 
 local PRE_GHOST_EVENT_TIME = "styrbar.time.preghost"
 local IGNORE_GHOST_THRESHOLD = 0.7 -- 700ms (taken from Herdsman converter)
+local ARROW_REPEATING = "styrbar.arrow.repeating" -- arrow whose auto-repeat awaits its release
 
 local ButtonNames = {
   ON = "Top",
@@ -69,6 +70,19 @@ local ButtonNames = {
   before triggering ON pushed should it be a ghost.
 ]]
 
+-- Ends an arrow auto-repeat once, on release or when max repetitions run out
+local function arrow_released(device, button_name)
+  device:set_field(ARROW_REPEATING, nil)
+  custom_button_utils.emit_button_event(device, button_name, capabilities.button.button.up, true)
+end
+
+local function arrow_repeat_finished(device)
+  local arrow = device:get_field(ARROW_REPEATING)
+  if arrow then
+    arrow_released(device, arrow)
+  end
+end
+
 -- Handles Scenes 0x09 command (comes before the ghost)
 local function styrbar_begin_held_handler(pressed_type)
   return function(driver, device, zb_rx)
@@ -80,7 +94,12 @@ local function styrbar_begin_held_handler(pressed_type)
       if payload:byte(i) ~= 0 then
         -- Not all zeros: the arrow long press ended (Zigbee2MQTT exposes it as
         -- arrow release with a duration). Stop any arrow auto-repeat.
-        custom_button_utils.autofire_stop(device)
+        -- Arrows held under ~2 s send no 0x08 and no release, so they never repeat.
+        local arrow = device:get_field(ARROW_REPEATING)
+        if arrow then
+          custom_button_utils.autofire_stop(device)
+          arrow_released(device, arrow)
+        end
         -- Zigbee2MQTT times the ghost ON from the release; suppress it from here too
         device:set_field(PRE_GHOST_EVENT_TIME, lua_socket.gettime())
         return
@@ -147,9 +166,11 @@ local function styrbar_scenes_button_handler(pressed_type)
 
     if pressed_type == capabilities.button.button.held then
       custom_button_utils.emit_button_event(device, button_name, pressed_type, true)
-      -- Arrow auto-repeat runs until the release (0x09 with non-zero payload)
+      -- Arrow auto-repeat runs until the release (0x09 with non-zero payload) or max repetitions
       if custom_features.autofire_enabled(device, button_name) then
-        custom_button_utils.autofire_start(device, button_name, pressed_type, device.preferences.autofireDelay, device.preferences.autofireMaxLoops)
+        device:set_field(ARROW_REPEATING, button_name)
+        custom_button_utils.autofire_start(device, button_name, pressed_type, device.preferences.arrowAutofireDelay,
+          device.preferences.arrowAutofireMaxLoops, arrow_repeat_finished)
       end
     elseif pressed_type == capabilities.button.button.pushed then
       custom_button_utils.emit_button_event(device, button_name, pressed_type)
@@ -178,6 +199,8 @@ local function info_changed(driver, device, event, args)
     or (args.old_st_store.preferences.multiTapEnabledPrev ~= device.preferences.multiTapEnabledPrev)
     or (args.old_st_store.preferences.multiTapEnabledNext ~= device.preferences.multiTapEnabledNext)
     or (args.old_st_store.preferences.multiTapMaxPresses ~= device.preferences.multiTapMaxPresses)
+    or (args.old_st_store.preferences.autofireEnabledPrev ~= device.preferences.autofireEnabledPrev)
+    or (args.old_st_store.preferences.autofireEnabledNext ~= device.preferences.autofireEnabledNext)
 
   if needs_press_type_change then
     custom_features.update_pressed_types(device)
