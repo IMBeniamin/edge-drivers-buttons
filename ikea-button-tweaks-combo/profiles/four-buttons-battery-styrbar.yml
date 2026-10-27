@@ -139,7 +139,7 @@ preferences:
       default: false      
   - title: "Auto-repeat Held Left [ < ]"
     name: autofireEnabledPrev
-    description: "Repeats until the arrow is released, then sends Toggled up. The first Held still arrives ~2 s into the press, when the remote reports which arrow it is."
+    description: "Repeats until the arrow is released, then sends Toggled up. Any Arrow repeats from the start of the hold until the arrow is known (~2 s), or sends Toggled up if released before."
     required: true
     preferenceType: boolean
     definition:

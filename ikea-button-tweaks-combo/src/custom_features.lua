@@ -157,7 +157,7 @@ end
 -- STYRBAR arrows with auto-repeat report their release as 'up' (Toggled up)
 function custom_features.arrow_release_enabled(device, button_name)
   return device:get_model() == STYRBAR and custom_features.autofire_enabled(device, button_name)
-    and (button_name == "Left" or button_name == "Right")
+    and (button_name == "Left" or button_name == "Right" or button_name == "AnyArrow")
 end
 
 function custom_features.expose_release_enabled(device, button_name)
@@ -194,6 +194,7 @@ function custom_features.autofire_enabled(device, button_name)
   if model == STYRBAR then
     return button_name == "Top" and device.preferences.autofireEnabledOn or button_name == "Bottom" and device.preferences.autofireEnabledOff
       or button_name == "Left" and device.preferences.autofireEnabledPrev or button_name == "Right" and device.preferences.autofireEnabledNext
+      or button_name == "AnyArrow" and (device.preferences.autofireEnabledPrev or device.preferences.autofireEnabledNext)
   end
 
   if model == TRADFRI_REMOTE then

@@ -45,6 +45,9 @@ local PowerConfiguration = clusters.PowerConfiguration
 local PRE_GHOST_EVENT_TIME = "styrbar.time.preghost"
 local IGNORE_GHOST_THRESHOLD = 0.7 -- 700ms (taken from Herdsman converter)
 local ARROW_REPEATING = "styrbar.arrow.repeating" -- arrow whose auto-repeat awaits its release
+-- The arrow is named ~2 s after the first 0x09. Holds shorter than that send nothing more,
+-- so the Any Arrow repetition ends on its own if no arrow is named in time.
+local ARROW_NAMING_TIMEOUT_MILLIS = 2400
 
 local ButtonNames = {
   ON = "Top",
@@ -112,6 +115,14 @@ local function styrbar_begin_held_handler(pressed_type)
     -- Here we know an arrow was held, but not which one, it takes 2 seconds to know!
     -- The AnyArrow tweak will trigger the held action right now to save time
     custom_button_utils.emit_button_event(device, ButtonNames.ANY_ARROW, pressed_type)
+
+    -- Auto-repeat Any Arrow until the held arrow is named, which hands over to it
+    if custom_features.autofire_enabled(device, ButtonNames.ANY_ARROW) then
+      local delay = device.preferences.arrowAutofireDelay
+      device:set_field(ARROW_REPEATING, ButtonNames.ANY_ARROW)
+      custom_button_utils.autofire_start(device, ButtonNames.ANY_ARROW, pressed_type, delay,
+        math.ceil(ARROW_NAMING_TIMEOUT_MILLIS / delay), arrow_repeat_finished)
+    end
   end
 end
 
